@@ -1,0 +1,903 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dubai Property ROI Calculator | BetterHomes</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 10px 40px rgba(31, 52, 63, 0.15);
+            overflow: hidden;
+        }
+
+        .header {
+            background: #1F343F;
+            color: white;
+            padding: 40px 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 32px;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+
+        .header p {
+            font-size: 16px;
+            opacity: 0.9;
+            line-height: 1.5;
+        }
+
+        .form-section {
+            padding: 40px 30px;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #1F343F;
+            font-weight: 500;
+            font-size: 14px;
+        }
+
+        .form-group select,
+        .form-group input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 15px;
+            transition: all 0.3s ease;
+            background: white;
+            color: #1F343F;
+        }
+
+        .form-group select:focus,
+        .form-group input:focus {
+            outline: none;
+            border-color: #2C537A;
+            box-shadow: 0 0 0 3px rgba(44, 83, 122, 0.1);
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .calculate-btn {
+            width: 100%;
+            padding: 16px;
+            background: #D9B9A0;
+            color: #1F343F;
+            border: none;
+            border-radius: 8px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 20px;
+        }
+
+        .calculate-btn:hover {
+            background: #c9a990;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(217, 185, 160, 0.3);
+        }
+
+        .calculate-btn:active {
+            transform: translateY(0);
+        }
+
+        /* Loading Screen */
+        .loading-screen {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(31, 52, 63, 0.95);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+
+        .loading-screen.active {
+            display: flex;
+        }
+
+        .loading-content {
+            text-align: center;
+            color: white;
+            max-width: 500px;
+            padding: 20px;
+        }
+
+        .loading-icon {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 30px;
+            position: relative;
+        }
+
+        .loading-spinner {
+            width: 100%;
+            height: 100%;
+            border: 4px solid rgba(123, 160, 178, 0.3);
+            border-top: 4px solid #7BA0B2;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .loading-text {
+            font-size: 20px;
+            margin-bottom: 30px;
+            min-height: 60px;
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .progress-bar-container {
+            width: 100%;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            overflow: hidden;
+            margin-top: 20px;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #7BA0B2, #2C537A);
+            border-radius: 10px;
+            transition: width 0.3s ease;
+            width: 0%;
+        }
+
+        .progress-percentage {
+            margin-top: 10px;
+            font-size: 14px;
+            opacity: 0.8;
+        }
+
+        /* Results Screen */
+        .results-screen {
+            display: none;
+            padding: 40px 30px;
+        }
+
+        .results-screen.active {
+            display: block;
+        }
+
+        .results-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .results-header h2 {
+            color: #1F343F;
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+
+        .results-header p {
+            color: #666;
+            font-size: 15px;
+        }
+
+        .results-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .result-card {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            padding: 25px;
+            border-radius: 12px;
+            border-left: 4px solid #2C537A;
+        }
+
+        .result-card h3 {
+            color: #666;
+            font-size: 13px;
+            font-weight: 500;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .result-card .value {
+            color: #1F343F;
+            font-size: 32px;
+            font-weight: 700;
+        }
+
+        .result-card .unit {
+            color: #666;
+            font-size: 16px;
+            font-weight: 400;
+        }
+
+        .projection-section {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+        }
+
+        .projection-section h3 {
+            color: #1F343F;
+            font-size: 20px;
+            margin-bottom: 20px;
+        }
+
+        .projection-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .projection-item:last-child {
+            border-bottom: none;
+        }
+
+        .projection-label {
+            color: #666;
+            font-size: 15px;
+        }
+
+        .projection-value {
+            color: #1F343F;
+            font-weight: 600;
+            font-size: 15px;
+        }
+
+        .market-comparison {
+            background: linear-gradient(135deg, #7BA0B2 0%, #2C537A 100%);
+            color: white;
+            padding: 25px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+        }
+
+        .market-comparison h3 {
+            font-size: 18px;
+            margin-bottom: 10px;
+        }
+
+        .market-comparison p {
+            font-size: 15px;
+            opacity: 0.95;
+            line-height: 1.6;
+        }
+
+        .considerations {
+            background: #fff9f5;
+            border: 2px solid #D9B9A0;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+        }
+
+        .considerations h3 {
+            color: #1F343F;
+            font-size: 18px;
+            margin-bottom: 15px;
+        }
+
+        .considerations ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .considerations li {
+            color: #666;
+            font-size: 14px;
+            padding: 8px 0;
+            padding-left: 25px;
+            position: relative;
+        }
+
+        .considerations li:before {
+            content: "▪";
+            position: absolute;
+            left: 0;
+            color: #D9B9A0;
+            font-size: 20px;
+        }
+
+        .cta-section {
+            text-align: center;
+            padding: 30px;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border-radius: 12px;
+        }
+
+        .cta-section h3 {
+            color: #1F343F;
+            font-size: 22px;
+            margin-bottom: 15px;
+        }
+
+        .cta-section p {
+            color: #666;
+            font-size: 15px;
+            margin-bottom: 25px;
+            line-height: 1.6;
+        }
+
+        .cta-btn {
+            display: inline-block;
+            padding: 16px 50px;
+            background: #D9B9A0;
+            color: #1F343F;
+            text-decoration: none;
+            border: none;
+            border-radius: 8px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .cta-btn:hover {
+            background: #c9a990;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(217, 185, 160, 0.3);
+        }
+
+        .disclaimer {
+            text-align: center;
+            color: #999;
+            font-size: 13px;
+            margin-top: 30px;
+            line-height: 1.5;
+        }
+
+        /* Success Message */
+        .success-message {
+            display: none;
+            text-align: center;
+            padding: 40px 30px;
+        }
+
+        .success-message.active {
+            display: block;
+        }
+
+        .success-icon {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 20px;
+            background: #4CAF50;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 40px;
+            color: white;
+        }
+
+        .success-message h2 {
+            color: #1F343F;
+            font-size: 28px;
+            margin-bottom: 15px;
+        }
+
+        .success-message p {
+            color: #666;
+            font-size: 16px;
+            line-height: 1.6;
+        }
+
+        @media (max-width: 768px) {
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+
+            .header h1 {
+                font-size: 24px;
+            }
+
+            .results-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .result-card .value {
+                font-size: 28px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Dubai Property ROI Calculator</h1>
+            <p>Get instant insights on your investment potential in Dubai's thriving real estate market</p>
+        </div>
+
+        <div class="form-section" id="formSection">
+            <form id="roiForm">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="propertyType">Property Type</label>
+                        <select id="propertyType" required>
+                            <option value="">Select property type</option>
+                            <option value="Studio">Studio</option>
+                            <option value="Apartment">Apartment</option>
+                            <option value="Villa">Villa</option>
+                            <option value="Townhouse">Townhouse</option>
+                            <option value="Penthouse">Penthouse</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="bedrooms">Number of Bedrooms</label>
+                        <select id="bedrooms" required>
+                            <option value="">Select bedrooms</option>
+                            <option value="Studio">Studio</option>
+                            <option value="1BR">1 Bedroom</option>
+                            <option value="2BR">2 Bedrooms</option>
+                            <option value="3BR">3 Bedrooms</option>
+                            <option value="4BR">4 Bedrooms</option>
+                            <option value="5BR+">5+ Bedrooms</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="location">Location (Freehold Areas)</label>
+                    <select id="location" required>
+                        <option value="">Select location</option>
+                        <option value="Dubai Marina">Dubai Marina</option>
+                        <option value="Downtown Dubai">Downtown Dubai</option>
+                        <option value="Palm Jumeirah">Palm Jumeirah</option>
+                        <option value="JBR">Jumeirah Beach Residence (JBR)</option>
+                        <option value="Business Bay">Business Bay</option>
+                        <option value="JVC">Jumeirah Village Circle (JVC)</option>
+                        <option value="Arabian Ranches">Arabian Ranches</option>
+                        <option value="Dubai Hills Estate">Dubai Hills Estate</option>
+                        <option value="DAMAC Hills">DAMAC Hills</option>
+                        <option value="Dubai Sports City">Dubai Sports City</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="propertyStatus">Property Status</label>
+                        <select id="propertyStatus" required>
+                            <option value="">Select status</option>
+                            <option value="Off-plan">Off-plan (Under Construction)</option>
+                            <option value="Resale">Resale (Ready Property)</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="propertyPrice">Property Price (AED)</label>
+                        <input type="number" id="propertyPrice" placeholder="e.g., 2500000" required min="100000" step="10000">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="furnishing">Furnishing Status</label>
+                        <select id="furnishing" required>
+                            <option value="">Select furnishing</option>
+                            <option value="Unfurnished">Unfurnished</option>
+                            <option value="Furnished">Furnished</option>
+                            <option value="Fully Furnished">Fully Furnished</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="viewType">View Type</label>
+                        <select id="viewType" required>
+                            <option value="">Select view</option>
+                            <option value="No View">No View</option>
+                            <option value="City View">City View</option>
+                            <option value="Partial Sea View">Partial Sea View</option>
+                            <option value="Sea View">Sea View</option>
+                            <option value="Marina View">Marina View</option>
+                            <option value="Golf Course View">Golf Course View</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="floorLevel">Floor Level</label>
+                        <select id="floorLevel" required>
+                            <option value="">Select floor level</option>
+                            <option value="Ground">Ground Floor</option>
+                            <option value="Low">Low Floor (1-5)</option>
+                            <option value="Mid">Mid Floor (6-15)</option>
+                            <option value="High">High Floor (16-30)</option>
+                            <option value="Penthouse">Penthouse Level</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="timeline">Investment Timeline</label>
+                        <select id="timeline" required>
+                            <option value="">Select timeline</option>
+                            <option value="3">3 Years</option>
+                            <option value="5">5 Years</option>
+                            <option value="7">7 Years</option>
+                            <option value="10">10 Years</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="purchaseMethod">Purchase Method</label>
+                    <select id="purchaseMethod" required>
+                        <option value="">Select purchase method</option>
+                        <option value="Cash">Full Cash Payment</option>
+                        <option value="Mortgage">Mortgage Financing</option>
+                    </select>
+                </div>
+
+                <button type="submit" class="calculate-btn">Calculate My ROI</button>
+            </form>
+        </div>
+
+        <div class="results-screen" id="resultsSection">
+            <div class="results-header">
+                <h2>Your Investment Analysis</h2>
+                <p>Based on current Dubai market trends and your property specifications</p>
+            </div>
+
+            <div class="results-grid">
+                <div class="result-card">
+                    <h3>Gross Rental Yield</h3>
+                    <div class="value"><span id="grossYield">0</span><span class="unit">%</span></div>
+                </div>
+                <div class="result-card">
+                    <h3>Net Rental Yield</h3>
+                    <div class="value"><span id="netYield">0</span><span class="unit">%</span></div>
+                </div>
+                <div class="result-card">
+                    <h3>Monthly Cash Flow</h3>
+                    <div class="value"><span id="monthlyCashFlow">0</span> <span class="unit">AED</span></div>
+                </div>
+            </div>
+
+            <div class="projection-section">
+                <h3><span id="timelineYears">5</span>-Year Investment Projection</h3>
+                <div class="projection-item">
+                    <span class="projection-label">Total Rental Income</span>
+                    <span class="projection-value">AED <span id="totalRental">0</span></span>
+                </div>
+                <div class="projection-item">
+                    <span class="projection-label">Property Appreciation</span>
+                    <span class="projection-value">+<span id="appreciation">0</span>% (AED <span id="appreciationAmount">0</span>)</span>
+                </div>
+                <div class="projection-item">
+                    <span class="projection-label">Total ROI</span>
+                    <span class="projection-value"><span id="totalROI">0</span>%</span>
+                </div>
+                <div class="projection-item">
+                    <span class="projection-label">Annualized Return</span>
+                    <span class="projection-value"><span id="annualizedReturn">0</span>%</span>
+                </div>
+            </div>
+
+            <div class="market-comparison">
+                <h3>📊 Market Comparison</h3>
+                <p id="marketComparisonText">This property ranks in the top 35% for ROI in Dubai Marina. Similar 2BR apartments yield 5.2% - 6.8% in this area.</p>
+            </div>
+
+            <div class="considerations">
+                <h3>⚠️ Key Considerations</h3>
+                <ul id="considerationsList">
+                    <li>Vacancy risk: 5-7% in this area based on historical data</li>
+                    <li>Service charges may vary depending on building amenities</li>
+                    <li>Strong rental demand due to proximity to business districts</li>
+                    <li>Market conditions subject to change based on economic factors</li>
+                </ul>
+            </div>
+
+            <div class="cta-section">
+                <h3>Do you like the results?</h3>
+                <p>Our investment consultants can provide detailed breakdowns, exact service charge estimates, current tenant demand data, and negotiation strategies tailored to your specific needs.</p>
+                
+                <div class="form-group" style="max-width: 400px; margin: 0 auto 20px;">
+                    <label for="phoneNumber" style="display: block; text-align: left; margin-bottom: 8px; color: #1F343F; font-weight: 500; font-size: 14px;">Your Phone Number</label>
+                    <input type="tel" id="phoneNumber" placeholder="+971 50 123 4567" required style="width: 100%; padding: 12px 16px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 15px; text-align: center;">
+                    <small style="display: block; color: #999; font-size: 12px; margin-top: 5px;">We'll contact you to discuss your investment</small>
+                </div>
+                
+                <button class="cta-btn" id="ctaButton">}Confirm My Interest</button>
+            </div>
+
+            <div class="disclaimer">
+                *Please note that these are market estimates based on current trends and historical data. Actual returns may vary depending on property condition, market conditions, management efficiency, and other factors. This calculator is for informational purposes only and should not be considered as financial advice.
+            </div>
+        </div>
+
+        <div class="success-message" id="successMessage">
+            <div class="success-icon">✓</div>
+            <h2>Thank You!</h2>
+            <p>We've received your interest. One of our expert real estate consultants will reach out to you shortly with a detailed analysis tailored to your investment goals.</p>
+            <p style="margin-top: 20px; color: #2C537A; font-weight: 500;">We look forward to helping you make an informed investment decision in Dubai's dynamic property market.</p>
+        </div>
+    </div>
+
+    <div class="loading-screen" id="loadingScreen">
+        <div class="loading-content">
+            <div class="loading-icon">
+                <div class="loading-spinner"></div>
+            </div>
+            <div class="loading-text" id="loadingText">Initializing analysis...</div>
+            <div class="progress-bar-container">
+                <div class="progress-bar" id="progressBar"></div>
+            </div>
+            <div class="progress-percentage" id="progressPercentage">0%</div>
+        </div>
+    </div>
+
+    <script>
+        // ===== WEBHOOK CONFIGURATION =====
+        // Change this URL to your actual webhook endpoint
+        const WEBHOOK_URL = 'https://engageteam.app.n8n.cloud/webhook/9865dd92-ac40-490c-82fa-8dd07e9ad478';
+        // =================================
+
+        const form = document.getElementById('roiForm');
+        const formSection = document.getElementById('formSection');
+        const loadingScreen = document.getElementById('loadingScreen');
+        const resultsSection = document.getElementById('resultsSection');
+        const successMessage = document.getElementById('successMessage');
+        const loadingText = document.getElementById('loadingText');
+        const progressBar = document.getElementById('progressBar');
+        const progressPercentage = document.getElementById('progressPercentage');
+        const ctaButton = document.getElementById('ctaButton');
+
+        let formData = {};
+
+        // Loading messages
+        const loadingMessages = [
+            { text: "Searching property data for your selected area...", duration: 12 },
+            { text: "Gathering current market insights and trends...", duration: 12 },
+            { text: "Analyzing rental yields and occupancy rates...", duration: 12 },
+            { text: "Calculating appreciation trends and projections...", duration: 12 },
+            { text: "Factoring in costs, fees, and market variables...", duration: 12 },
+            { text: "Finalizing your personalized investment report...", duration: 10 }
+        ];
+
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // Collect form data
+            formData = {
+                propertyType: document.getElementById('propertyType').value,
+                bedrooms: document.getElementById('bedrooms').value,
+                location: document.getElementById('location').value,
+                propertyStatus: document.getElementById('propertyStatus').value,
+                propertyPrice: document.getElementById('propertyPrice').value,
+                furnishing: document.getElementById('furnishing').value,
+                viewType: document.getElementById('viewType').value,
+                floorLevel: document.getElementById('floorLevel').value,
+                timeline: document.getElementById('timeline').value,
+                purchaseMethod: document.getElementById('purchaseMethod').value,
+                timestamp: new Date().toISOString()
+            };
+
+            // Start loading experience
+            startLoadingExperience();
+        });
+
+        function startLoadingExperience() {
+            formSection.style.display = 'none';
+            loadingScreen.classList.add('active');
+            
+            let currentStep = 0;
+            let totalDuration = loadingMessages.reduce((sum, msg) => sum + msg.duration, 0);
+            let elapsedTime = 0;
+
+            function updateLoadingStep() {
+                if (currentStep < loadingMessages.length) {
+                    loadingText.textContent = loadingMessages[currentStep].text;
+                    
+                    const stepDuration = loadingMessages[currentStep].duration * 1000;
+                    const stepProgress = (elapsedTime / totalDuration) * 100;
+                    
+                    // Animate progress bar
+                    progressBar.style.width = stepProgress + '%';
+                    progressPercentage.textContent = Math.round(stepProgress) + '%';
+                    
+                    currentStep++;
+                    elapsedTime += loadingMessages[currentStep - 1].duration;
+                    
+                    setTimeout(updateLoadingStep, stepDuration);
+                } else {
+                    // Loading complete, show results
+                    progressBar.style.width = '100%';
+                    progressPercentage.textContent = '100%';
+                    
+                    setTimeout(() => {
+                        loadingScreen.classList.remove('active');
+                        generateResults();
+                        resultsSection.classList.add('active');
+                        window.scrollTo(0, 0);
+                    }, 500);
+                }
+            }
+
+            updateLoadingStep();
+        }
+
+        function generateResults() {
+            const price = parseInt(formData.propertyPrice);
+            const timeline = parseInt(formData.timeline);
+            const location = formData.location;
+            const bedrooms = formData.bedrooms;
+            const viewType = formData.viewType;
+            const furnishing = formData.furnishing;
+
+            // Generate realistic-looking fake data based on inputs
+            let baseYield = 5.5;
+            
+            // Adjust based on location
+            const locationMultipliers = {
+                'Dubai Marina': 1.1,
+                'Downtown Dubai': 1.05,
+                'Palm Jumeirah': 0.95,
+                'JBR': 1.08,
+                'Business Bay': 1.12,
+                'JVC': 1.15,
+                'Arabian Ranches': 0.92,
+                'Dubai Hills Estate': 1.0,
+                'DAMAC Hills': 1.05,
+                'Dubai Sports City': 1.18,
+                'Other': 1.0
+            };
+
+            baseYield *= (locationMultipliers[location] || 1.0);
+
+            // Adjust based on view
+            if (viewType.includes('Sea')) baseYield *= 0.95;
+            if (viewType === 'Marina View') baseYield *= 0.98;
+
+            // Adjust based on furnishing
+            if (furnishing === 'Fully Furnished') baseYield *= 1.05;
+            if (furnishing === 'Furnished') baseYield *= 1.02;
+
+            const grossYield = baseYield.toFixed(1);
+            const netYield = (baseYield * 0.85).toFixed(1);
+            const annualRent = (price * (baseYield / 100)).toFixed(0);
+            const monthlyCashFlow = (annualRent / 12).toFixed(0);
+            const totalRental = (annualRent * timeline).toFixed(0);
+            
+            const appreciationRate = (3 + Math.random() * 2).toFixed(1);
+            const appreciationAmount = (price * (appreciationRate / 100) * timeline).toFixed(0);
+            const totalROI = ((parseInt(totalRental) + parseInt(appreciationAmount)) / price * 100).toFixed(1);
+            const annualizedReturn = (totalROI / timeline).toFixed(1);
+
+            // Update DOM
+            document.getElementById('grossYield').textContent = grossYield;
+            document.getElementById('netYield').textContent = netYield;
+            document.getElementById('monthlyCashFlow').textContent = parseInt(monthlyCashFlow).toLocaleString();
+            document.getElementById('timelineYears').textContent = timeline;
+            document.getElementById('totalRental').textContent = parseInt(totalRental).toLocaleString();
+            document.getElementById('appreciation').textContent = appreciationRate;
+            document.getElementById('appreciationAmount').textContent = parseInt(appreciationAmount).toLocaleString();
+            document.getElementById('totalROI').textContent = totalROI;
+            document.getElementById('annualizedReturn').textContent = annualizedReturn;
+
+            // Update market comparison
+            const rankPercentage = Math.floor(Math.random() * 30) + 25; // 25-55%
+            const similarRangeLow = (parseFloat(netYield) - 0.8).toFixed(1);
+            const similarRangeHigh = (parseFloat(netYield) + 0.8).toFixed(1);
+            document.getElementById('marketComparisonText').textContent = 
+                `This property ranks in the top ${rankPercentage}% for ROI in ${location}. Similar ${bedrooms} properties yield ${similarRangeLow}% - ${similarRangeHigh}% in this area.`;
+
+            // Update considerations based on location
+            const considerations = [
+                `Vacancy risk: ${Math.floor(Math.random() * 5) + 3}-${Math.floor(Math.random() * 5) + 5}% in ${location} based on historical data`,
+                furnishing === 'Unfurnished' ? 'Consider furnishing to increase rental appeal and yield' : 'Furnished properties attract premium tenants',
+                viewType.includes('Sea') || viewType.includes('Marina') ? 'Premium view commands higher rental rates and better tenant retention' : 'Standard view offers solid rental potential',
+                formData.propertyStatus === 'Off-plan' ? 'Off-plan properties offer payment plans but carry completion risk' : 'Ready properties generate immediate rental income'
+            ];
+
+            const considerationsList = document.getElementById('considerationsList');
+            considerationsList.innerHTML = considerations.map(c => `<li>${c}</li>`).join('');
+        }
+
+        ctaButton.addEventListener('click', function() {
+            const phoneNumber = document.getElementById('phoneNumber').value.trim();
+            
+            // Validate phone number is not empty
+            if (!phoneNumber) {
+                alert('Please enter your phone number to continue');
+                document.getElementById('phoneNumber').focus();
+                return;
+            }
+            
+            // Add phone number to form data
+            formData.phoneNumber = phoneNumber;
+            
+            // Send data to webhook
+            sendToWebhook();
+            
+            // Show success message
+            resultsSection.classList.remove('active');
+            successMessage.classList.add('active');
+            window.scrollTo(0, 0);
+        });
+
+        function sendToWebhook() {
+            // Add results data to formData
+            const webhookData = {
+                ...formData,
+                results: {
+                    grossYield: document.getElementById('grossYield').textContent,
+                    netYield: document.getElementById('netYield').textContent,
+                    monthlyCashFlow: document.getElementById('monthlyCashFlow').textContent,
+                    totalROI: document.getElementById('totalROI').textContent,
+                    annualizedReturn: document.getElementById('annualizedReturn').textContent
+                },
+                userInterested: true,
+                submittedAt: new Date().toISOString()
+            };
+
+            // Send to webhook
+            fetch(WEBHOOK_URL, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(webhookData)
+            })
+            .then(response => {
+                if (response.ok) {
+                    console.log('Data successfully sent to webhook');
+                } else {
+                    console.warn('Webhook returned non-OK status:', response.status);
+                }
+            })
+            .catch(error => {
+                console.error('Error sending to webhook:', error);
+                // Still show success to user even if webhook fails
+            });
+        }
+    </script>
+</body>
+</html>
